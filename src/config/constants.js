@@ -43,8 +43,8 @@ export const IMAGE_CONFIG = {
 // Enhanced Dark Mode Colors
 export const COLORS = {
   // Primary colors with better contrast
-  PRIMARY: "#00E676", // Bright green
-  PRIMARY_DARK: "#00C853", // Darker green for pressed states
+  PRIMARY: "#00C853", // Darker green
+  PRIMARY_DARK: "#00A152", // Even darker green for pressed states
   PRIMARY_LIGHT: "#69F0AE", // Lighter green for highlights
   SECONDARY: "#1E88E5", // Blue
   ACCENT: "#FF6B35", // Orange accent
@@ -74,7 +74,7 @@ export const COLORS = {
   BORDER_LIGHT: "#555555",
   
   // Gradients for visual appeal
-  GRADIENT_PRIMARY: ["#00E676", "#00C853"],
+  GRADIENT_PRIMARY: ["#00C853", "#00A152"],
   GRADIENT_SURFACE: ["#1C1C1C", "#2A2A2A"],
   GRADIENT_BACKGROUND: ["#0A0A0A", "#1C1C1C"],
   

@@ -1,22 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import * as SecureStore from "expo-secure-store";
-import { API_BASE_URL } from "../config/constants";
+import apiClient from "../utils/apiClient";
 
 export const fetchTrashReports = createAsyncThunk(
   "trash/fetchReports",
   async () => {
-    const token = await SecureStore.getItemAsync("authToken");
-    const response = await fetch(`${API_BASE_URL}/trash/reports`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return await response.json();
+    return await apiClient.get("/trash/reports");
   }
 );
 
 export const submitTrashReport = createAsyncThunk(
   "trash/submitReport",
   async (reportData) => {
-    const token = await SecureStore.getItemAsync("authToken");
     const formData = new FormData();
 
     formData.append("photo", {
@@ -32,20 +26,7 @@ export const submitTrashReport = createAsyncThunk(
     formData.append("size", reportData.size);
     formData.append("timestamp", reportData.timestamp);
 
-    const response = await fetch(`${API_BASE_URL}/trash/report`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to submit report");
-    }
-
-    return await response.json();
+    return await apiClient.upload("/trash/report", formData);
   }
 );
 

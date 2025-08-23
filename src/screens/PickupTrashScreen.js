@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from "react-redux";
 import * as Location from 'expo-location';
 import { COLORS } from '../config/constants';
-import { pickupVerificationService } from '../services/pickupVerification';
 
 const PickupTrashScreen = () => {
   const navigation = useNavigation();
+  const { reports } = useSelector((state) => state.trash);
   const [trashItems, setTrashItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -38,6 +39,18 @@ const PickupTrashScreen = () => {
       const days = Math.floor(diffInMinutes / 1440);
       return `${days} day${days > 1 ? 's' : ''} ago`;
     }
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
   };
 
   useEffect(() => {
@@ -74,38 +87,45 @@ const PickupTrashScreen = () => {
   const loadTrashItems = async () => {
     try {
       if (!userLocation) {
-        // If we don't have location yet, get it first
         await getCurrentLocation();
         return;
       }
 
-      const items = await pickupVerificationService.getTrashItemsNearby(
-        userLocation,
-        1000 // 1km radius
-      );
+      // Filter pending reports and calculate distances
+      const nearbyTrash = reports
+        .filter(report => report.status === 'pending')
+        .map(report => {
+          const distance = calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            parseFloat(report.latitude),
+            parseFloat(report.longitude)
+          );
+          
+          return {
+            id: report.id.toString(),
+            name: `${report.trash_type || 'Litter'} - ${report.size || 'Unknown size'}`,
+            description: report.description || 'No description provided',
+            location: {
+              latitude: parseFloat(report.latitude),
+              longitude: parseFloat(report.longitude)
+            },
+            reportedTime: formatReportedTime(report.created_at),
+            distance: distance,
+            distanceText: distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`,
+            points: 10, // Default points
+            trashType: report.trash_type,
+            size: report.size,
+            status: report.status
+          };
+        })
+        .filter(item => item.distance <= 5) // Only show trash within 5km
+        .sort((a, b) => a.distance - b.distance); // Sort by distance (closest first)
       
-      // Transform the API response to match our UI expectations
-      const transformedItems = items.map(item => ({
-        id: item.id.toString(),
-        description: item.description || 'Trash reported',
-        location: {
-          latitude: parseFloat(item.location.latitude),
-          longitude: parseFloat(item.location.longitude)
-        },
-        reportedTime: formatReportedTime(item.reportedAt),
-        distance: `${(item.distance / 1000).toFixed(1)} km`,
-        points: item.points || 10,
-        imageUrl: item.imageUrl,
-        trashType: item.trashType,
-        size: item.size,
-        severity: item.severity,
-        locationContext: item.locationContext
-      }));
-      
-      setTrashItems(transformedItems);
+      setTrashItems(nearbyTrash);
     } catch (error) {
       console.error('Error loading trash items:', error);
-      Alert.alert('Error', 'Failed to load trash items. Please check your connection.');
+      Alert.alert('Error', 'Failed to load trash items.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -133,6 +153,7 @@ const PickupTrashScreen = () => {
     >
       <View style={styles.itemHeader}>
         <View style={styles.itemInfo}>
+          <Text style={styles.itemName}>{item.name}</Text>
           <Text style={styles.itemDescription}>{item.description}</Text>
           <View style={styles.itemMeta}>
             <View style={styles.metaItem}>
@@ -141,7 +162,7 @@ const PickupTrashScreen = () => {
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="location-outline" size={14} color={COLORS.TEXT_SECONDARY} />
-              <Text style={styles.metaText}>{item.distance}</Text>
+              <Text style={styles.metaText}>{item.distanceText}</Text>
             </View>
           </View>
         </View>
@@ -219,9 +240,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.BACKGROUND,
   },
   header: {
-    backgroundColor: COLORS.PRIMARY,
     padding: 20,
-    paddingTop: 50,
+    paddingTop: 70,
+    paddingBottom: 10,
   },
   headerTitle: {
     fontSize: 28,
@@ -241,6 +262,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
+    paddingBottom: 100,
   },
   itemCard: {
     backgroundColor: COLORS.SURFACE,
@@ -259,11 +281,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
-  itemDescription: {
-    fontSize: 16,
-    fontWeight: '600',
+  itemName: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: COLORS.TEXT_PRIMARY,
+    marginBottom: 4,
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
     marginBottom: 8,
+    lineHeight: 18,
   },
   itemMeta: {
     flexDirection: 'row',

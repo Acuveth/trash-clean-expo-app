@@ -352,9 +352,9 @@ const ReportTrashScreen = () => {
         disabled={!hasPhoto || !hasLocation || isSubmitting}
       >
         {isSubmitting ? (
-          <ActivityIndicator size="small" color="white" />
+          <ActivityIndicator size="small" color={COLORS.TEXT_PRIMARY} />
         ) : (
-          <MaterialIcons name="send" size={24} color="white" />
+          <MaterialIcons name="send" size={24} color={COLORS.TEXT_PRIMARY} />
         )}
         <Text style={styles.submitButtonText}>
           {isSubmitting ? "Submitting..." : "Submit Report"}
@@ -371,9 +371,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    paddingTop: 60,
+    paddingTop: 70,
     paddingBottom: 30,
-    backgroundColor: COLORS.SURFACE,
   },
   title: {
     fontSize: 28,
@@ -402,7 +401,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.DIVIDER,
   },
   completedStep: {
-    backgroundColor: COLORS.SURFACE_VARIANT,
+    // No background styling - removed gray background
   },
   stepNumber: {
     width: 30,
@@ -450,17 +449,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.SUCCESS,
+    backgroundColor: COLORS.SURFACE,
     marginHorizontal: 20,
     marginVertical: 10,
     padding: 15,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
   },
   disabledButton: {
-    backgroundColor: "#ccc",
+    backgroundColor: COLORS.SURFACE,
+    opacity: 0.6,
   },
   submitButtonText: {
-    color: "white",
+    color: COLORS.TEXT_PRIMARY,
     fontSize: 18,
     fontWeight: "bold",
     marginLeft: 10,

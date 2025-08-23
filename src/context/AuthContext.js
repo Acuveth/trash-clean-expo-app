@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import storage from "../utils/storage";
-import { API_BASE_URL } from "../config/constants";
+import apiClient from "../utils/apiClient";
 import oauthService from "../services/oauthService";
 
 const AuthContext = createContext();
@@ -19,13 +19,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = await storage.getItemAsync("authToken");
       if (token) {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
+        const userData = await apiClient.get("/auth/me");
+        setUser(userData);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -37,59 +32,44 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log("Login attempt with:", { email, password: password ? "***" : undefined });
-      console.log("API URL:", `${API_BASE_URL}/auth/login`);
       
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      console.log("Response status:", response.status);
+      const { user, token } = await apiClient.post("/auth/login", { email, password });
       
-      if (response.ok) {
-        const { user, token } = await response.json();
-        await storage.setItemAsync("authToken", token);
-        setUser(user);
-        return { success: true };
-      } else {
-        let errorMessage = "Authentication failed";
-        try {
-          const error = await response.json();
-          console.log("Error response:", error);
-          errorMessage = error.error || error.message || errorMessage;
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-          errorMessage = `Authentication failed (${response.status})`;
-        }
-        return { success: false, error: errorMessage };
-      }
+      await storage.setItemAsync("authToken", token);
+      setUser(user);
+      return { success: true };
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, error: "Network error. Please check your connection." };
+      let errorMessage = "Authentication failed";
+      
+      if (error.status && error.data) {
+        errorMessage = error.data.error || error.data.message || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
     }
   };
 
   const register = async (email, name, password) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, password }),
-      });
-
-      if (response.ok) {
-        const { user, token } = await response.json();
-        await storage.setItemAsync("authToken", token);
-        setUser(user);
-        return { success: true };
-      } else {
-        const error = await response.json();
-        return { success: false, error: error.error || error.message || "Registration failed" };
-      }
+      const { user, token } = await apiClient.post("/auth/register", { email, name, password });
+      
+      await storage.setItemAsync("authToken", token);
+      setUser(user);
+      return { success: true };
     } catch (error) {
       console.error("Registration error:", error);
-      return { success: false, error: "Network error. Please check your connection." };
+      let errorMessage = "Registration failed";
+      
+      if (error.status && error.data) {
+        errorMessage = error.data.error || error.data.message || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
     }
   };
 

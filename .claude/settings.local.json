@@ -13,7 +13,9 @@
       "Bash(npm uninstall:*)",
       "Bash(find:*)",
       "Bash(pkill:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(ipconfig)",
+      "Bash(npx expo logs:*)"
     ],
     "deny": [],
     "ask": [],

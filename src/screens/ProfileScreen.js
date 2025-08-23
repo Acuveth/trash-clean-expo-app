@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from "react-redux";
 import { COLORS } from "../config/constants";
 import { useAuth } from "../context/AuthContext";
 import ShareProgress from '../components/ShareProgress';
@@ -18,6 +19,7 @@ const ProfileScreen = () => {
   const { user, logout, simpleLogout } = useAuth();
   const navigation = useNavigation();
   const { shareText } = ShareProgress();
+  const { reports } = useSelector((state) => state.trash);
 
   const handleShare = async () => {
     try {
@@ -37,6 +39,10 @@ const ProfileScreen = () => {
 
   const handleSettings = () => {
     navigation.navigate('Settings');
+  };
+
+  const handleLeaderboard = () => {
+    navigation.navigate('Leaderboard');
   };
 
   const confirmLogout = () => {
@@ -123,6 +129,34 @@ const ProfileScreen = () => {
         </View>
       </View>
 
+      {/* Trash Reports Stats */}
+      <View style={styles.trashStatsContainer}>
+        <Text style={styles.sectionTitle}>Trash Reports Status</Text>
+        <View style={styles.trashStatsRow}>
+          <View style={styles.trashStatItem}>
+            <MaterialIcons name="pending" size={24} color={COLORS.WARNING} />
+            <Text style={styles.trashStatNumber}>
+              {reports?.filter((r) => r.status === "pending").length || 0}
+            </Text>
+            <Text style={styles.trashStatLabel}>Pending</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.trashStatItem}>
+            <MaterialIcons name="check-circle" size={24} color={COLORS.SUCCESS} />
+            <Text style={styles.trashStatNumber}>
+              {reports?.filter((r) => r.status === "cleaned").length || 0}
+            </Text>
+            <Text style={styles.trashStatLabel}>Cleaned</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.trashStatItem}>
+            <MaterialIcons name="delete" size={24} color={COLORS.PRIMARY} />
+            <Text style={styles.trashStatNumber}>{reports?.length || 0}</Text>
+            <Text style={styles.trashStatLabel}>Total</Text>
+          </View>
+        </View>
+      </View>
+
       {/* Quick Actions */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity style={styles.actionButton} onPress={handleEditProfile}>
@@ -134,6 +168,12 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.actionButton} onPress={handleViewBadges}>
           <MaterialIcons name="military-tech" size={24} color={COLORS.TEXT_PRIMARY} />
           <Text style={styles.actionText}>Achievements</Text>
+          <MaterialIcons name="chevron-right" size={20} color={COLORS.TEXT_SECONDARY} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton} onPress={handleLeaderboard}>
+          <MaterialIcons name="leaderboard" size={24} color={COLORS.TEXT_PRIMARY} />
+          <Text style={styles.actionText}>Leaderboard</Text>
           <MaterialIcons name="chevron-right" size={20} color={COLORS.TEXT_SECONDARY} />
         </TouchableOpacity>
 
@@ -173,7 +213,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: COLORS.SURFACE,
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: 70,
     paddingBottom: 30,
     paddingHorizontal: 20,
   },
@@ -240,6 +280,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
+  },
+  trashStatsContainer: {
+    backgroundColor: COLORS.SURFACE,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 15,
+  },
+  trashStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  trashStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  trashStatNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  trashStatLabel: {
+    fontSize: 12,
+    color: COLORS.TEXT_SECONDARY,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.DIVIDER,
   },
   actionsContainer: {
     paddingHorizontal: 20,

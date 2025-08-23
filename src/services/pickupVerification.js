@@ -1,14 +1,8 @@
-import axios from 'axios';
-import { getAPIEndpoint } from '../config/secrets';
-import * as SecureStore from 'expo-secure-store';
-
-const API_URL = getAPIEndpoint();
+import apiClient from '../utils/apiClient';
 
 class PickupVerificationService {
   async verifyPickup(verificationData) {
     try {
-      const token = await SecureStore.getItemAsync('userToken');
-      
       const formData = new FormData();
       formData.append('trashId', verificationData.trashId);
       formData.append('userLatitude', verificationData.userLocation.latitude.toString());
@@ -25,32 +19,22 @@ class PickupVerificationService {
         formData.append('verificationImage', imageBlob, 'pickup_verification.jpg');
       }
 
-      const response = await axios.post(
-        `${API_URL}/trash/verify-pickup`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': token ? `Bearer ${token}` : '',
-          },
-          timeout: 30000, // 30 second timeout for image upload
-        }
-      );
+      const response = await apiClient.upload('/trash/verify-pickup', formData);
 
       return {
-        success: response.data.success,
-        message: response.data.message,
-        pointsEarned: response.data.pointsEarned,
-        matchConfidence: response.data.matchConfidence,
+        success: response.success,
+        message: response.message,
+        pointsEarned: response.pointsEarned,
+        matchConfidence: response.matchConfidence,
       };
     } catch (error) {
       console.error('Pickup verification error:', error);
       
       // Handle specific error cases
-      if (error.response) {
-        switch (error.response.status) {
+      if (error.status) {
+        switch (error.status) {
           case 400:
-            throw new Error(error.response.data.message || 'Invalid verification data');
+            throw new Error(error.data?.message || 'Invalid verification data');
           case 404:
             throw new Error('Trash item not found or already picked up');
           case 409:
@@ -60,10 +44,8 @@ class PickupVerificationService {
           default:
             throw new Error('Verification failed. Please try again.');
         }
-      } else if (error.request) {
-        throw new Error('Network error. Please check your connection.');
       } else {
-        throw new Error('An unexpected error occurred');
+        throw new Error('Network error. Please check your connection.');
       }
     }
   }
@@ -82,20 +64,13 @@ class PickupVerificationService {
 
   async getTrashItemsNearby(location, radius = 100) {
     try {
-      const token = await SecureStore.getItemAsync('userToken');
-      
-      const response = await axios.get(`${API_URL}/trash/nearby`, {
-        params: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          radius, // radius in meters
-        },
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
+      const response = await apiClient.get('/trash/nearby', {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        radius, // radius in meters
       });
 
-      return response.data.items || [];
+      return response.items || [];
     } catch (error) {
       console.error('Error fetching nearby trash items:', error);
       return [];
@@ -104,23 +79,13 @@ class PickupVerificationService {
 
   async reportPickupIssue(trashId, issueType, description) {
     try {
-      const token = await SecureStore.getItemAsync('userToken');
-      
-      const response = await axios.post(
-        `${API_URL}/trash/${trashId}/report-issue`,
-        {
-          issueType, // 'not_found', 'already_cleaned', 'inaccessible', 'wrong_location'
-          description,
-          timestamp: new Date().toISOString(),
-        },
-        {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-          },
-        }
-      );
+      const response = await apiClient.post(`/trash/${trashId}/report-issue`, {
+        issueType, // 'not_found', 'already_cleaned', 'inaccessible', 'wrong_location'
+        description,
+        timestamp: new Date().toISOString(),
+      });
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error reporting pickup issue:', error);
       throw error;

@@ -19,6 +19,7 @@ import PickupVerificationScreen from './src/screens/PickupVerificationScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import LeaderboardScreen from './src/screens/LeaderboardScreen';
 
 // Context
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -55,14 +56,19 @@ const MainTabs = () => (
         backgroundColor: COLORS.SURFACE,
         borderTopColor: COLORS.BORDER,
         borderTopWidth: 1,
-        paddingBottom: 5,
-        paddingTop: 5,
-        height: 65,
+        paddingBottom: 35,
+        paddingTop: 0,
+        height: 85,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
       },
       tabBarLabelStyle: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '600',
-        marginBottom: 5,
+        marginBottom: 2,
+        marginTop: -3,
       },
       headerShown: false,
     })}
@@ -127,6 +133,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PickupVerification" component={PickupVerificationScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="Achievements" component={AchievementsScreen} />
+            <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
           </>
         ) : (
